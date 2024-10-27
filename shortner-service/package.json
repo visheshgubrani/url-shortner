@@ -1,0 +1,19 @@
+{
+  "name": "shortner-service",
+  "version": "1.0.0",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "express-rate-limit": "^7.4.1",
+    "ioredis": "^5.4.1",
+    "rate-limit-redis": "^4.2.0",
+    "url": "^0.11.4"
+  }
+}
