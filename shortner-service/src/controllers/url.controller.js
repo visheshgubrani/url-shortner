@@ -32,11 +32,13 @@ const redirectUrl = asyncHandler(async (req, res) => {
   if (cachedUrl) {
     fetch("http://analytics-service:3001/track", {
       method: "POST",
-      headers: { "Contend-Type": "application/json" },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         shortCode: req.params.code,
         timestamp: new Date(),
         userAgent: req.headers["user-agent"],
+        referer: req.headers["referer"] || "direct",
+        ip: req.ip,
       }),
     }).catch(console.error)
 
