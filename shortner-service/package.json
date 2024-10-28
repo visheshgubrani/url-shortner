@@ -4,16 +4,25 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "nodemon src/index.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.1",
     "express-rate-limit": "^7.4.1",
     "ioredis": "^5.4.1",
+    "mongoose": "^8.7.3",
     "rate-limit-redis": "^4.2.0",
+    "shortid": "^2.2.16",
     "url": "^0.11.4"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.7"
   }
 }

@@ -1,5 +1,5 @@
-import redis from "../config/redis"
-import { URL } from "../models/urlSchema"
+import redis from "../config/redis.js"
+import { URL } from "../models/urlSchema.js"
 
 const asyncHandler = (reqHandler) => {
   return async (req, res, next) => {
@@ -48,7 +48,7 @@ const redirectUrl = asyncHandler(async (req, res) => {
     return res.status(404).json({ error: "URL not found" })
   }
 
-  url.clicks++
+  await url.clicks++
   await url.save()
 
   // Cache the results
