@@ -1,3 +1,4 @@
+import { UAParser } from "ua-parser-js"
 import redis from "../config/redis.js"
 import { URL } from "../models/urlSchema.js"
 
@@ -28,35 +29,53 @@ const shortenUrl = asyncHandler(async (req, res) => {
 })
 
 const redirectUrl = asyncHandler(async (req, res) => {
-  const cachedUrl = await redis.get(`url:${req.params.code}`)
+  const shortCode = req.params.code
+  const cachedUrl = await redis.get(`url:${shortCode}`)
+
+  const ua = new UAParser(req.headers["user-agent"])
+
+  const deviceInfo = {
+    browser: ua.getBrowser().name || "unknown",
+    os: ua.getOS.name || "unknown",
+    device: ua.getDevice().type || "desktop",
+  }
+
+  const urlDoc = await URL.findOneAndUpdate(
+    { shortCode },
+    {
+      $inc: {
+        clicks: 1,
+      },
+    },
+    { new: true }
+  )
   if (cachedUrl) {
     await fetch("http://localhost:3001/track", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        shortCode: req.params.code,
+        shortCode,
         timestamp: new Date(),
         userAgent: req.headers["user-agent"],
         referer: req.headers["referer"] || "direct",
         ip: req.ip,
+        browser: deviceInfo.browser,
+        os: deviceInfo.os,
+        device: deviceInfo.device,
       }),
     }).catch(console.error)
 
     return res.redirect(cachedUrl)
   }
 
-  const url = await URL.findOne({ shortCode: req.params.code })
-  if (!url) {
+  if (!urlDoc) {
     return res.status(404).json({ error: "URL not found" })
   }
 
-  await url.clicks++
-  await url.save()
-
   // Cache the results
-  await redis.set(`url:${req.params.code}`, url.originalUrl, "EX", 86400)
+  await redis.set(`url:${shortCode}`, urlDoc.originalUrl, "EX", 86400)
 
-  res.redirect(url.originalUrl)
+  res.redirect(urlDoc.originalUrl)
 })
 
 export { shortenUrl, redirectUrl }
