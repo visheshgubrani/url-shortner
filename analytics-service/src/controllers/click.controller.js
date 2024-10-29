@@ -1,5 +1,5 @@
 import { UAParser } from "ua-parser-js"
-import { Click } from "../models/click.model"
+import { Click } from "../models/click.model.js"
 
 const asyncHandler = (reqHandler) => {
   return async (req, res, next) => {

@@ -30,7 +30,7 @@ const shortenUrl = asyncHandler(async (req, res) => {
 const redirectUrl = asyncHandler(async (req, res) => {
   const cachedUrl = await redis.get(`url:${req.params.code}`)
   if (cachedUrl) {
-    fetch("http://analytics-service:3001/track", {
+    await fetch("http://localhost:3001/track", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
