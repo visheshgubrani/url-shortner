@@ -17,7 +17,7 @@ export default function URLShortener() {
     console.log("Submitting URL:", url) // Debug log
 
     try {
-      const response = await fetch("http://localhost:3002/url/shorten", {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

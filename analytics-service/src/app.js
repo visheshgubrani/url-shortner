@@ -1,7 +1,14 @@
 import express from "express"
 import analyticsRouter from "./routes/click.route.js"
+import cors from "cors"
 
 const app = express()
+app.use(
+  cors({
+    origin: "*",
+    methods: ["GET", "POST", "OPTIONS"],
+  })
+)
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 app.use(express.static("public"))
@@ -18,7 +25,11 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: "Something broke!" })
 })
 
+app.get("/health", (req, res) => {
+  res.status(200).json({ status: "ok" })
+})
+
 // Routes
-app.use("/", analyticsRouter)
+app.use("/api/analytics", analyticsRouter)
 
 export default app

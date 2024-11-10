@@ -3,7 +3,7 @@ import { redirectUrl, shortenUrl } from "../controllers/url.controller.js"
 
 const router = Router()
 
-router.route("/shorten").post(shortenUrl)
-router.route("/:code").get(redirectUrl)
+router.route("/api/shorten").post(shortenUrl)
+router.route("/r/:code").get(redirectUrl)
 
 export default router

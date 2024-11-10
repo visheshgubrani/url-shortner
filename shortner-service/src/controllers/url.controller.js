@@ -31,6 +31,7 @@ const shortenUrl = asyncHandler(async (req, res) => {
 const redirectUrl = asyncHandler(async (req, res) => {
   const shortCode = req.params.code
   const cachedUrl = await redis.get(`url:${shortCode}`)
+  const analyticsUrl = process.env.ANALYTICS_URL
 
   const ua = new UAParser(req.headers["user-agent"])
 
@@ -50,7 +51,7 @@ const redirectUrl = asyncHandler(async (req, res) => {
     { new: true }
   )
   if (cachedUrl) {
-    await fetch("http://localhost:3001/track", {
+    await fetch(`${analyticsUrl}/track`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({

@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: shortner
+  namespace: url-shortner
+  labels:
+    app: shortner
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: shortner
+  template:
+    metadata:
+      labels:
+        app: shortner
+    spec:
+      containers:
+        - name: shortner
+          image: asia-south1-docker.pkg.dev/acoustic-cirrus-439618-h8/shortner-service/shortner-service:latest
+          imagePullPolicy: Always
+          envFrom:
+            - secretRef:
+                name: shortner-env-secret
+          ports:
+            - containerPort: 3002
