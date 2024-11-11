@@ -6,7 +6,7 @@ metadata:
   labels:
     app: analytics
 spec:
-  replicas: 1
+  replicas: {{ .Values.analytics.replicas }}
   selector:
     matchLabels:
       app: analytics
@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: analytics
-          image: asia-south1-docker.pkg.dev/acoustic-cirrus-439618-h8/analytics-service/analytics-service:latest
+          image: asia-south1-docker.pkg.dev/acoustic-cirrus-439618-h8/analytics-service/analytics-service:{{ .Values.analytics.image.tag }}
           envFrom:
             - secretRef:
                 name: analytics-env-secret

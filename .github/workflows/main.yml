@@ -1,0 +1,80 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: main
+    paths-ignore:
+      - "helm/**"
+      - "README.md"
+env:
+  PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+  REGISTRY: asia-south1-docker.pkg.dev
+  IMAGE_TAG: ${{github.ref_name}}
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: "read"
+      id-token: "write"
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{secrets.GH_TOKEN}}
+          persist-credentials: true
+
+      - id: "auth"
+        uses: "google-github-actions/auth@v2"
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SA_EMAIL }}
+
+      - name: "Set up Cloud SDK"
+        uses: "google-github-actions/setup-gcloud@v2"
+        with:
+          version: ">= 363.0.0"
+          project_id: ${{ env.PROJECT_ID }}
+
+      - name: Configure Docker for Artificat Registry
+        run: |
+          gcloud auth configure-docker ${{ env.REGISTRY }} --quiet
+
+      - name: Build and push shortner image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./shortner-service
+          push: true
+          tags: ${{env.REGISTRY}}/${{env.PROJECT_ID}}/shortner-service/shortner-service:${{env.IMAGE_TAG}}
+
+      - name: Build and push analytics image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./analytics-service
+          push: true
+          tags: ${{env.REGISTRY}}/${{env.PROJECT_ID}}/analytics-service/analytics-service:${{env.IMAGE_TAG}}
+
+      - name: Build and push frontend image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./frontend-service
+          push: true
+          tags: ${{env.REGISTRY}}/${{env.PROJECT_ID}}/frontend-service/frontend-service:${{env.IMAGE_TAG}}
+
+      - name: Update Helm Values
+        run: |
+          yq e '.frontend.image.tag = "${{ github.sha }}"' -i ./helm/values.yaml
+          yq e '.shortner.image.tag = "${{ github.sha }}"' -i ./helm/values.yaml
+          yq e '.analytics.image.tag = "${{ github.sha }}"' -i ./helm/values.yaml
+
+      - name: Commit and push updated Helm values
+        run: |
+          git config --global user.name 'GitHub Actions'
+          git config --global user.email 'actions@github.com'
+          git add ./helm/values.yaml
+          git commit -m "Update image tags to ${{ github.sha }}"
+          git push
+        env:
+          GITHUB_TOKEN: ${{secrets.GH_TOKEN}}

@@ -6,7 +6,7 @@ metadata:
   labels:
     app: shortner
 spec:
-  replicas: 2
+  replicas: {{ .Values.shortner.replicas }}
   selector:
     matchLabels:
       app: shortner
@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: shortner
-          image: asia-south1-docker.pkg.dev/acoustic-cirrus-439618-h8/shortner-service/shortner-service:latest
+          image: asia-south1-docker.pkg.dev/acoustic-cirrus-439618-h8/shortner-service/shortner-service:{{ .Values.shortner.image.tag }}
           imagePullPolicy: Always
           envFrom:
             - secretRef:

@@ -6,7 +6,7 @@ metadata:
   labels:
     app: frontend
 spec:
-  replicas: 2
+  replicas: {{ .Values.frontend.replicas }}
   selector:
     matchLabels:
       app: frontend
@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: frontend
-          image: asia-south1-docker.pkg.dev/acoustic-cirrus-439618-h8/frontend-service/frontend-service:latest
+          image: asia-south1-docker.pkg.dev/acoustic-cirrus-439618-h8/frontend-service/frontend-service:{{ .Values.frontend.image.tag }}
           env:
             - name: NODE_ENV
               value: "production"
