@@ -6,10 +6,13 @@ on:
     paths-ignore:
       - "helm/**"
       - "README.md"
+      - "**.md"
+      - ".gitignore"
 env:
   PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
   REGISTRY: asia-south1-docker.pkg.dev
-  IMAGE_TAG: ${{github.ref_name}}
+  IMAGE_TAG: ${{github.sha}}
+  DOCKER_BUILDKIT: 1 # Enable BuildKit for faster builds
 
 jobs:
   build-and-push:
@@ -24,7 +27,10 @@ jobs:
         uses: actions/checkout@v4
         with:
           token: ${{secrets.GH_TOKEN}}
-          persist-credentials: true
+          fetch-depth: 1 # Shallow clone for faster checkout
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
       - id: "auth"
         uses: "google-github-actions/auth@v2"
@@ -43,12 +49,24 @@ jobs:
         run: |
           gcloud auth configure-docker ${{ env.REGISTRY }} --quiet
 
+      # Cache Docker layers for faster builds
+      - name: Cache Docker layers
+        uses: actions/cache@v3
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{runner.os}}-buildx-${{github.sha}}
+          restore-keys: |
+            ${{runner.os}}-buildx-
+
       - name: Build and push shortner image
         uses: docker/build-push-action@v6
         with:
           context: ./shortner-service
           push: true
           tags: ${{env.REGISTRY}}/${{env.PROJECT_ID}}/shortner-service/shortner-service:${{env.IMAGE_TAG}}
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache-new
+          builder: ${{steps.buildx.outputs.name}}
 
       - name: Build and push analytics image
         uses: docker/build-push-action@v6
@@ -56,6 +74,9 @@ jobs:
           context: ./analytics-service
           push: true
           tags: ${{env.REGISTRY}}/${{env.PROJECT_ID}}/analytics-service/analytics-service:${{env.IMAGE_TAG}}
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache-new
+          builder: ${{ steps.buildx.outputs.name }}
 
       - name: Build and push frontend image
         uses: docker/build-push-action@v6
@@ -63,19 +84,27 @@ jobs:
           context: ./frontend-service
           push: true
           tags: ${{env.REGISTRY}}/${{env.PROJECT_ID}}/frontend-service/frontend-service:${{env.IMAGE_TAG}}
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache-new
+          builder: ${{ steps.buildx.outputs.name }}
+
+      - name: Move cache
+        run: |
+          rm -rf /tmp/.buildx-cache
+          mv /tmp/.buildx-cache-new /tmp/.buildx-cache
 
       - name: Update Helm Values
         run: |
-          yq e '.frontend.image.tag = "${{ github.sha }}"' -i ./helm/values.yaml
-          yq e '.shortner.image.tag = "${{ github.sha }}"' -i ./helm/values.yaml
-          yq e '.analytics.image.tag = "${{ github.sha }}"' -i ./helm/values.yaml
+          yq e '.frontend.image.tag = "${{ env.IMAGE_TAG }}"' -i ./helm/values.yaml
+          yq e '.shortner.image.tag = "${{ env.IMAGE_TAG }}"' -i ./helm/values.yaml
+          yq e '.analytics.image.tag = "${{ env.IMAGE_TAG }}"' -i ./helm/values.yaml
 
       - name: Commit and push updated Helm values
         run: |
           git config --global user.name 'GitHub Actions'
           git config --global user.email 'actions@github.com'
           git add ./helm/values.yaml
-          git commit -m "Update image tags to ${{ github.sha }}"
+          git commit -m "Update image tags to ${{ env.IMAGE_TAG }}"
           git push
         env:
           GITHUB_TOKEN: ${{secrets.GH_TOKEN}}
