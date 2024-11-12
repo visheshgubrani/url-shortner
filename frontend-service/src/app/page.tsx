@@ -13,13 +13,11 @@ export default function URLShortener() {
     setIsLoading(true)
     setError("")
     setShortenedUrl("")
-
+    const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://kagenou.xyz/api/shorten'
     console.log("Submitting URL:", url) // Debug log
-    console.log("API URL:", process.env.NEXT_PUBLIC_API_URL)
-    console.log("URL being shortened:", url)
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}`, {
+      const response = await fetch(API_URL, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
