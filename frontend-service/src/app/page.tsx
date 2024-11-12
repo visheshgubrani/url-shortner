@@ -15,6 +15,8 @@ export default function URLShortener() {
     setShortenedUrl("")
 
     console.log("Submitting URL:", url) // Debug log
+    console.log("API URL:", process.env.NEXT_PUBLIC_API_URL)
+    console.log("URL being shortened:", url)
 
     try {
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}`, {
@@ -26,6 +28,8 @@ export default function URLShortener() {
       })
 
       console.log("Response status:", response.status) // Debug log
+      console.log("Full request URL:", `${process.env.NEXT_PUBLIC_API_URL}`)
+      console.log("Response status:", response.status)
 
       if (!response.ok) {
         const errorData = await response.json()
