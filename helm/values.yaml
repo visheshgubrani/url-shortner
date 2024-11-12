@@ -1,14 +1,14 @@
 frontend:
   replicas: 2
   image:
-    tag: latest
+    tag: 9843ba44837e6c37bb659ced37a11af5ca355b4a
 shortner:
   replicas: 2
   image:
-    tag: latest
+    tag: 9843ba44837e6c37bb659ced37a11af5ca355b4a
 analytics:
   replicas: 2
   image:
-    tag: latest
+    tag: 9843ba44837e6c37bb659ced37a11af5ca355b4a
 ingress:
   host: kagenou.xyz
