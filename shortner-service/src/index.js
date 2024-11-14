@@ -1,3 +1,4 @@
+import "./tracing.js"
 import app from "./app.js"
 import connectDb from "./db/connectDb.js"
 import dotenv from "dotenv"
