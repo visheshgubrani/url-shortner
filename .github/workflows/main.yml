@@ -4,10 +4,10 @@ on:
   push:
     branches: main
     paths-ignore:
-      - "helm/**"
-      - "README.md"
-      - "**.md"
-      - ".gitignore"
+      - 'helm/**'
+      - 'README.md'
+      - '**.md'
+      - '.gitignore'
 env:
   PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
   REGISTRY: asia-south1-docker.pkg.dev
@@ -20,30 +20,48 @@ jobs:
     runs-on: ubuntu-latest
 
     permissions:
-      contents: "read"
-      id-token: "write"
+      contents: 'read'
+      id-token: 'write'
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
           token: ${{secrets.GH_TOKEN}}
-          fetch-depth: 1 # Shallow clone for faster checkout
+          fetch-depth: 0
+
+      - name: SonarQube Scan
+        uses: sonarsource/sonarqube-scan-action@v4
+        env:
+          SONAR_TOKEN: ${{secrets.SONAR_TOKEN}}
+          SONAR_HOST_URL: ${{secrets.SONAR_HOST_URL}}
+          with:
+          args: >
+            -Dsonar.projectKey=url-shortener
+
+      - name: Run Trivy filesystem scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          severity: 'CRITICAL,HIGH'
 
       - name: Setup Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - id: "auth"
-        uses: "google-github-actions/auth@v2"
+      - id: 'auth'
+        uses: 'google-github-actions/auth@v2'
         with:
           create_credentials_file: true
           workload_identity_provider: ${{ secrets.WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ secrets.GCP_SA_EMAIL }}
 
-      - name: "Set up Cloud SDK"
-        uses: "google-github-actions/setup-gcloud@v2"
+      - name: 'Set up Cloud SDK'
+        uses: 'google-github-actions/setup-gcloud@v2'
         with:
-          version: ">= 363.0.0"
+          version: '>= 363.0.0'
           project_id: ${{ env.PROJECT_ID }}
 
       - name: Configure Docker for Artificat Registry
@@ -69,6 +87,16 @@ jobs:
           cache-to: type=local,dest=/tmp/.buildx-cache-new
           builder: ${{steps.buildx.outputs.name}}
 
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: '${{env.REGISTRY}}/${{env.PROJECT_ID}}/shortner-service/shortner-service:${{env.IMAGE_TAG}}'
+          format: 'table'
+          exit-code: '1'
+          ignore-unfixed: true
+          vuln-type: 'os,library'
+          severity: 'CRITICAL,HIGH'
+
       - name: Build and push analytics image
         uses: docker/build-push-action@v6
         with:
@@ -78,6 +106,16 @@ jobs:
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache-new
           builder: ${{ steps.buildx.outputs.name }}
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: '${{env.REGISTRY}}/${{env.PROJECT_ID}}/analytics-service/analytics-service:${{env.IMAGE_TAG}}'
+          format: 'table'
+          exit-code: '1'
+          ignore-unfixed: true
+          vuln-type: 'os,library'
+          severity: 'CRITICAL,HIGH'
 
       - name: Build and push frontend image
         uses: docker/build-push-action@v6
@@ -90,6 +128,16 @@ jobs:
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache-new
           builder: ${{ steps.buildx.outputs.name }}
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: '${{env.REGISTRY}}/${{env.PROJECT_ID}}/frontend-service/frontend-service:${{env.IMAGE_TAG}}'
+          format: 'table'
+          exit-code: '1'
+          ignore-unfixed: true
+          vuln-type: 'os,library'
+          severity: 'CRITICAL,HIGH'
 
       - name: Move cache
         run: |

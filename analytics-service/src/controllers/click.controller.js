@@ -1,5 +1,5 @@
-import { UAParser } from "ua-parser-js"
-import { Click } from "../models/click.model.js"
+import { UAParser } from 'ua-parser-js'
+import { Click } from '../models/click.model.js'
 
 const asyncHandler = (reqHandler) => {
   return async (req, res, next) => {
@@ -13,25 +13,79 @@ const asyncHandler = (reqHandler) => {
 
 const trackUrl = asyncHandler(async (req, res) => {
   const { shortCode } = req.body
-  const ua = new UAParser(req.headers["user-agent"])
+
+  if (!shortCode) {
+    return res.status(400).json({ error: 'shortCode is required' })
+  }
+
+  // Initialize UAParser with proper error handling
+  let browserInfo = {
+    device: 'unknown',
+    browser: 'unknown',
+    os: 'unknown',
+  }
+
+  try {
+    const ua = new UAParser(req.headers['user-agent'] || '')
+    browserInfo = {
+      device: ua.getDevice().type || 'desktop',
+      browser: ua.getBrowser().name || 'unknown',
+      os: ua.getOS().name || 'unknown',
+    }
+  } catch (error) {
+    console.error('Error parsing user agent:', error)
+    // Continue with defaults set above
+  }
+
+  // Get IP address handling different possible formats
+  const ip = (
+    req.headers['x-forwarded-for'] ||
+    req.headers['x-real-ip'] ||
+    req.ip ||
+    req.connection.remoteAddress ||
+    ''
+  )
+    .split(',')[0]
+    .trim()
 
   const click = new Click({
     shortCode,
-    ctry: req.headers["cf-ipcountry"] || "unknown",
-    city: req.headers["cf-ipcity"] || "unknown",
-    ip: req.ip,
-    referer: req.headers["referer"] || "direct",
-    device: ua.getDevice().type || "desktop",
-    browser: ua.getBrowser().name,
-    os: ua.getOS().name,
+    country:
+      req.headers['cf-ipcountry'] || req.headers['x-country'] || 'unknown',
+    city: req.headers['cf-ipcity'] || req.headers['x-city'] || 'unknown',
+    ip: ip,
+    referer:
+      req.headers['referer'] ||
+      req.headers['referrer'] || // Note both spellings
+      'direct',
+    device: browserInfo.device,
+    browser: browserInfo.browser,
+    os: browserInfo.os,
+    timestamp: new Date(),
   })
 
-  if (!click) {
-    throw new Error("Analytics tracking failed")
-  }
+  try {
+    await click.save()
+    console.log(`Tracked click for shortCode: ${shortCode}`, {
+      ip,
+      device: browserInfo.device,
+      browser: browserInfo.browser,
+      os: browserInfo.os,
+    })
 
-  await click.save()
-  res.status(200).send({ status: "success" })
+    res.status(200).json({
+      status: 'success',
+      data: {
+        shortCode,
+        device: browserInfo.device,
+        browser: browserInfo.browser,
+        os: browserInfo.os,
+      },
+    })
+  } catch (error) {
+    console.error('Error saving click:', error)
+    throw new Error('Analytics tracking failed: ' + error.message)
+  }
 })
 
 const urlStats = asyncHandler(async (req, res) => {
@@ -98,16 +152,16 @@ const Stats7Days = asyncHandler(async (req, res) => {
     {
       $group: {
         _id: {
-          year: { $year: "$timestamp" },
-          month: { $month: "$timestamp" },
-          day: { $dayOfMonth: "$timestamp" },
-          hour: { $hour: "$timestamp" },
+          year: { $year: '$timestamp' },
+          month: { $month: '$timestamp' },
+          day: { $dayOfMonth: '$timestamp' },
+          hour: { $hour: '$timestamp' },
         },
         count: { $sum: 1 },
       },
     },
     {
-      $sort: { "_id.year": 1, "_id.month": 1, "_id.day": 1, "_id.hour": 1 },
+      $sort: { '_id.year': 1, '_id.month': 1, '_id.day': 1, '_id.hour': 1 },
     },
   ])
 

@@ -2,7 +2,7 @@ apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
   name: shortner-service-monitor
-  namespace: url-shortner
+  namespace: monitoring
   labels:
     release: prometheus
 
