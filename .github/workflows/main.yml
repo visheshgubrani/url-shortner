@@ -8,6 +8,11 @@ on:
       - 'README.md'
       - '**.md'
       - '.gitignore'
+      - '**/*.png'
+      - '**/*.jpg'
+      - '**/*.jpeg'
+      - '**/*.gif'
+      - '**/*.svg'
 env:
   PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
   REGISTRY: asia-south1-docker.pkg.dev
