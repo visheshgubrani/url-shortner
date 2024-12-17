@@ -1,14 +1,14 @@
 frontend:
   replicas: 2
   image:
-    tag: 73f0ef2f0013f239a44a5671a45d7360848667a6
+    tag: c78eea22d5309b9f8b140422b960fcf19fa180e2
 shortner:
   replicas: 2
   image:
-    tag: 73f0ef2f0013f239a44a5671a45d7360848667a6
+    tag: c78eea22d5309b9f8b140422b960fcf19fa180e2
 analytics:
   replicas: 2
   image:
-    tag: 73f0ef2f0013f239a44a5671a45d7360848667a6
+    tag: c78eea22d5309b9f8b140422b960fcf19fa180e2
 ingress:
   host: shrtnn.xyz
