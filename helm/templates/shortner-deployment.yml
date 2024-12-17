@@ -24,3 +24,4 @@ spec:
                 name: shortner-env-secret
           ports:
             - containerPort: 3002
+  

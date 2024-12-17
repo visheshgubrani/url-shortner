@@ -1,4 +1,7 @@
-import mongoose from "mongoose"
+import dotenvFlow from 'dotenv-flow'
+
+dotenvFlow.config()
+import mongoose from 'mongoose'
 
 const connectDb = async () => {
   try {

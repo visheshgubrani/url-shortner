@@ -11,4 +11,4 @@ analytics:
   image:
     tag: 8188401ff7bb8ae3e98cd21814fdcb43a484548c
 ingress:
-  host: kagenou.xyz
+  host: shrtnn.xyz

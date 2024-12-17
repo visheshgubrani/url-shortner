@@ -22,6 +22,6 @@ spec:
             - name: NODE_ENV
               value: "production"
             - name: NEXT_PUBLIC_API_URL
-              value: "https://kagenou.xyz/api/shorten"
+              value: "https://shrtnn.xyz/api/shorten"
           ports:
             - containerPort: 3000

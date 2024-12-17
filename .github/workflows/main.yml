@@ -13,7 +13,7 @@ env:
   REGISTRY: asia-south1-docker.pkg.dev
   IMAGE_TAG: ${{github.sha}}
   DOCKER_BUILDKIT: 1 # Enable BuildKit for faster builds
-  NEXT_PUBLIC_API_URL: https://kagenou.xyz/api/shorten
+  NEXT_PUBLIC_API_URL: https://shrtnn.xyz/api/shorten
 
 jobs:
   build-and-push:
@@ -44,8 +44,9 @@ jobs:
         with:
           scan-type: 'fs'
           scan-ref: '.'
-          format: 'sarif'
-          output: 'trivy-results.sarif'
+          skip-dirs: 'node_modules'
+          format: 'table'
+          exit-code: 0
           severity: 'CRITICAL,HIGH'
 
       - name: Setup Docker Buildx
@@ -73,8 +74,9 @@ jobs:
         uses: actions/cache@v3
         with:
           path: /tmp/.buildx-cache
-          key: ${{runner.os}}-buildx-${{github.sha}}
+          key: ${{runner.os}}-buildx-${{github.ref_name}}-${{hashFiles('**/package.json', '**/package-lock.json', '**/Dockerfile')}}
           restore-keys: |
+            ${{runner.os}}-buildx-${{github.ref_name}}-
             ${{runner.os}}-buildx-
 
       - name: Build and push shortner image

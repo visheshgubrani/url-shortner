@@ -1,9 +1,8 @@
-import "./tracing.js"
-import app from "./app.js"
-import connectDb from "./db/connectDb.js"
-import dotenv from "dotenv"
+import app from './app.js'
+import connectDb from './db/connectDb.js'
+import dotenvFlow from 'dotenv-flow'
 
-dotenv.config()
+dotenvFlow.config()
 
 connectDb()
   .then(() => {
