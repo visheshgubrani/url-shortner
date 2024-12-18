@@ -18,46 +18,35 @@ const trackUrl = asyncHandler(async (req, res) => {
     return res.status(400).json({ error: 'shortCode is required' })
   }
 
-  // Initialize UAParser with proper error handling
-  let browserInfo = {
+  // Default browser and device info
+  const browserInfo = {
     device: 'unknown',
     browser: 'unknown',
     os: 'unknown',
   }
 
+  // Parse user-agent
   try {
     const ua = new UAParser(req.headers['user-agent'] || '')
-    browserInfo = {
-      device: ua.getDevice().type || 'desktop',
-      browser: ua.getBrowser().name || 'unknown',
-      os: ua.getOS().name || 'unknown',
-    }
+    browserInfo.device = ua.getDevice().type || 'desktop'
+    browserInfo.browser = ua.getBrowser().name || 'unknown'
+    browserInfo.os = ua.getOS().name || 'unknown'
   } catch (error) {
-    console.error('Error parsing user agent:', error)
-    // Continue with defaults set above
+    console.error('Error parsing user-agent:', error)
   }
 
-  // Get IP address handling different possible formats
-  const ip = (
-    req.headers['x-forwarded-for'] ||
+  // Extract IP address
+  const ip =
+    req.headers['x-forwarded-for']?.split(',')[0].trim() ||
     req.headers['x-real-ip'] ||
     req.ip ||
-    req.connection.remoteAddress ||
-    ''
-  )
-    .split(',')[0]
-    .trim()
+    'unknown'
 
   const click = new Click({
     shortCode,
-    country:
-      req.headers['cf-ipcountry'] || req.headers['x-country'] || 'unknown',
-    city: req.headers['cf-ipcity'] || req.headers['x-city'] || 'unknown',
-    ip: ip,
-    referer:
-      req.headers['referer'] ||
-      req.headers['referrer'] || // Note both spellings
-      'direct',
+    country: 'unknown',
+    ip,
+    referer: req.headers['referer'] || 'direct',
     device: browserInfo.device,
     browser: browserInfo.browser,
     os: browserInfo.os,
@@ -66,25 +55,18 @@ const trackUrl = asyncHandler(async (req, res) => {
 
   try {
     await click.save()
-    console.log(`Tracked click for shortCode: ${shortCode}`, {
-      ip,
-      device: browserInfo.device,
-      browser: browserInfo.browser,
-      os: browserInfo.os,
-    })
+    console.log(`Tracked click for shortCode: ${shortCode}`, browserInfo)
 
     res.status(200).json({
       status: 'success',
       data: {
         shortCode,
-        device: browserInfo.device,
-        browser: browserInfo.browser,
-        os: browserInfo.os,
+        ...browserInfo,
       },
     })
   } catch (error) {
     console.error('Error saving click:', error)
-    throw new Error('Analytics tracking failed: ' + error.message)
+    res.status(500).json({ error: 'Failed to track analytics' })
   }
 })
 
